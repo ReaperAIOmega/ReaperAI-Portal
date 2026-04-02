@@ -3,22 +3,101 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Johnson Strategic Solutions | Payments</title>
+  <title>Johnson Strategic Solutions | Client Payments</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="navbar" data-navbar="navbar-admin.html"></div>
+  <div id="navbar" data-navbar="navbar-client.html"></div>
 
   <div class="container">
     <div class="hero">
       <div class="hero-box">
-        <h1>Payments</h1>
-        <p>This admin page will be built later.</p>
+        <h1>Client Payments</h1>
+        <p>
+          This section is for reviewing invoices, payment activity, and future billing connected to your services.
+        </p>
       </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>Total Invoices</h3>
+        <div class="stat-number">3</div>
+      </div>
+      <div class="stat-card">
+        <h3>Paid</h3>
+        <div class="stat-number">2</div>
+      </div>
+      <div class="stat-card">
+        <h3>Pending</h3>
+        <div class="stat-number">1</div>
+      </div>
+      <div class="stat-card">
+        <h3>Next Due</h3>
+        <div class="stat-number">Soon</div>
+      </div>
+    </div>
+
+    <div class="grid-3">
+      <div class="card">
+        <h3>View Current Invoice</h3>
+        <p>Review your current invoice and future billing activity.</p>
+        <a href="#" class="button">Coming Soon</a>
+      </div>
+
+      <div class="card">
+        <h3>Payment History</h3>
+        <p>Track completed payments and invoice history.</p>
+        <a href="#" class="button">Coming Soon</a>
+      </div>
+
+      <div class="card">
+        <h3>Need Another Service?</h3>
+        <p>Return to pricing or submit a new intake if you need additional services.</p>
+        <a href="https://reaperai.com/pricing.html" class="button">View Pricing</a>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <h3>Recent Payment Activity</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Invoice</th>
+            <th>Service</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Next Step</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>#1001</td>
+            <td>Consultation</td>
+            <td><span class="status status-active">Paid</span></td>
+            <td>Yesterday</td>
+            <td>On File</td>
+          </tr>
+          <tr>
+            <td>#1002</td>
+            <td>Funding Blueprint</td>
+            <td><span class="status status-pending">Pending</span></td>
+            <td>Today</td>
+            <td>Awaiting Payment</td>
+          </tr>
+          <tr>
+            <td>#1003</td>
+            <td>Custom Service</td>
+            <td><span class="status status-new">Created</span></td>
+            <td>Today</td>
+            <td>Review Invoice</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <div class="footer">© Johnson Strategic Solutions | Admin Platform</div>
+  <div class="footer">© Johnson Strategic Solutions | Client Portal</div>
 
   <script src="load-navbar.js"></script>
 </body>
