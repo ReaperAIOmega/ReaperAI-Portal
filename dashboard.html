@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="visibility:hidden;">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,8 +14,7 @@
       <div class="hero-box">
         <h1>Client Dashboard</h1>
         <p>
-          Welcome to your Johnson Strategic Solutions dashboard. This is where your services,
-          documents, payments, and next steps will be organized.
+          Welcome, <span id="welcome-name">Client</span>. Your services, documents, payments, and next steps are tied to your authenticated account.
         </p>
       </div>
     </div>
@@ -23,19 +22,19 @@
     <div class="stats-grid">
       <div class="stat-card">
         <h3>Active Services</h3>
-        <div class="stat-number">4</div>
+        <div class="stat-number" id="active-services">0</div>
       </div>
       <div class="stat-card">
         <h3>Open Tasks</h3>
-        <div class="stat-number">3</div>
+        <div class="stat-number" id="open-tasks">0</div>
       </div>
       <div class="stat-card">
         <h3>Account Status</h3>
-        <div class="stat-number">Live</div>
+        <div class="stat-number" id="account-status">Loading</div>
       </div>
       <div class="stat-card">
         <h3>Next Step</h3>
-        <div class="stat-number">Review</div>
+        <div class="stat-number" id="next-step">Loading</div>
       </div>
     </div>
 
@@ -65,15 +64,15 @@
       </div>
 
       <div class="card">
-        <h3>Platform Setup</h3>
-        <p>Review website, portal, and dashboard platform services.</p>
-        <a href="https://reaperai.com/platform-setup.html" class="button">Open</a>
+        <h3>Documents</h3>
+        <p>Review and upload documents tied to your account.</p>
+        <a href="client-documents.html" class="button">Open</a>
       </div>
 
       <div class="card">
-        <h3>Client Intake</h3>
-        <p>Submit or update intake information.</p>
-        <a href="https://reaperai.com/intake.html" class="button">Open</a>
+        <h3>Payments</h3>
+        <p>Review payment records and account billing status.</p>
+        <a href="payments.html" class="button">Open</a>
       </div>
     </div>
   </div>
@@ -81,5 +80,7 @@
   <div class="footer">© Johnson Strategic Solutions | Client Platform</div>
 
   <script src="load-navbar.js"></script>
+  <script type="module" src="auth-guard.js"></script>
+  <script type="module" src="dashboard-data.js"></script>
 </body>
 </html>
