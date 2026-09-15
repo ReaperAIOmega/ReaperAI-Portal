@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="visibility:hidden;">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,11 +10,13 @@
   <div class="container">
     <div class="panel hero-panel center">
       <h1>Client Portal</h1>
-      <p>Access your dashboard, case status, uploaded documents, funding roadmap, and service updates.</p>
+      <p>Your authenticated Johnson Strategic Solutions workspace for case status, documents, payments, tasks, and service updates.</p>
       <div class="button-row">
         <a href="dashboard.html" class="button">Open Dashboard</a>
+        <a href="#" class="btn-secondary" data-signout>Sign Out</a>
       </div>
     </div>
   </div>
+  <script type="module" src="auth-guard.js"></script>
 </body>
 </html>
