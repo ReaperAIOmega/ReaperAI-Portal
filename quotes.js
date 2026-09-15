@@ -7,8 +7,13 @@ const fmtMoney = (value, currency = 'USD') => new Intl.NumberFormat(undefined, {
 const fmtDate = (value) => value ? new Date(value).toLocaleString() : '—';
 
 async function respond(supabase, quote, decision, button) {
+  const noCharge = Number(quote.amount) === 0;
   const label = decision === 'accept' ? 'Accept' : 'Decline';
-  if (!window.confirm(`${label} this quote for ${fmtMoney(quote.amount, quote.currency || 'USD')}?`)) return;
+  const prompt = noCharge
+    ? `${label} this no-charge service authorization?`
+    : `${label} this quote for ${fmtMoney(quote.amount, quote.currency || 'USD')}?`;
+  if (!window.confirm(prompt)) return;
+
   button.disabled = true;
   button.textContent = decision === 'accept' ? 'Accepting…' : 'Declining…';
   const { data, error } = await supabase.functions.invoke('respond-to-quote', {
@@ -16,15 +21,20 @@ async function respond(supabase, quote, decision, button) {
   });
   if (error || !data?.ok) {
     console.error('Quote response failed', error, data);
-    window.alert('Your quote response could not be completed. Refresh the page and try again.');
+    window.alert('Your response could not be completed. Refresh the page and try again.');
     button.disabled = false;
     button.textContent = label;
     return;
   }
+
   if (decision === 'accept') {
-    window.alert(data.billing_deferred
-      ? 'Quote accepted. Billing remains deferred until the service is completed and released for payment.'
-      : 'Quote accepted. A pending payment record has been created in your billing workspace.');
+    if (data.no_charge) {
+      window.alert('Service authorization accepted. No payment is due for this engagement.');
+    } else if (data.billing_deferred) {
+      window.alert('Quote accepted. Billing remains deferred until the service is completed and released for payment.');
+    } else {
+      window.alert('Quote accepted. A pending payment record has been created in your billing workspace.');
+    }
   }
   await loadQuotes(supabase);
 }
@@ -38,15 +48,16 @@ async function loadQuotes(supabase) {
   list.replaceChildren();
   if (error) {
     console.error('Quote load error', error);
-    list.textContent = 'Quotes could not be loaded.';
+    list.textContent = 'Quotes and service authorizations could not be loaded.';
     return;
   }
   if (!data?.length) {
-    list.textContent = 'No quotes have been issued to your account yet.';
+    list.textContent = 'No quotes or service authorizations have been issued to your account yet.';
     return;
   }
 
   for (const quote of data) {
+    const noCharge = Number(quote.amount) === 0;
     const card = document.createElement('div');
     card.className = 'card';
     card.style.marginBottom = '22px';
@@ -55,7 +66,7 @@ async function loadQuotes(supabase) {
     title.textContent = quote.title;
     const amount = document.createElement('div');
     amount.className = 'stat-number';
-    amount.textContent = fmtMoney(quote.amount, quote.currency || 'USD');
+    amount.textContent = noCharge ? 'No charge' : fmtMoney(quote.amount, quote.currency || 'USD');
     const status = document.createElement('p');
     status.textContent = `Status: ${quote.status}`;
     const scope = document.createElement('p');
@@ -66,30 +77,40 @@ async function loadQuotes(supabase) {
 
     card.append(title, amount, status, scope, meta);
 
+    if (noCharge) {
+      const policy = document.createElement('p');
+      policy.textContent = 'This is a no-charge service authorization. No payment record will be created for this engagement.';
+      card.appendChild(policy);
+    }
+
     if (quote.status === 'sent') {
       const row = document.createElement('div');
       row.className = 'button-row';
       const accept = document.createElement('button');
       accept.type = 'button';
       accept.className = 'button';
-      accept.textContent = 'Accept quote';
+      accept.textContent = noCharge ? 'Accept service authorization' : 'Accept quote';
       accept.addEventListener('click', () => respond(supabase, quote, 'accept', accept));
       const decline = document.createElement('button');
       decline.type = 'button';
       decline.className = 'btn-secondary';
-      decline.textContent = 'Decline quote';
+      decline.textContent = 'Decline';
       decline.addEventListener('click', () => respond(supabase, quote, 'decline', decline));
       row.append(accept, decline);
       card.appendChild(row);
     } else if (quote.status === 'accepted') {
       const note = document.createElement('p');
-      note.textContent = 'This quote is accepted. If billing is eligible, the corresponding payment record will appear in Billing; deferred services remain on hold until completion.';
+      note.textContent = noCharge
+        ? 'This no-charge service authorization is accepted. No payment is due for this engagement.'
+        : 'This quote is accepted. If billing is eligible, the corresponding payment record will appear in Billing; deferred services remain on hold until completion.';
       card.appendChild(note);
-      const link = document.createElement('a');
-      link.href = 'payments.html';
-      link.className = 'button';
-      link.textContent = 'Open billing';
-      card.appendChild(link);
+      if (!noCharge) {
+        const link = document.createElement('a');
+        link.href = 'payments.html';
+        link.className = 'button';
+        link.textContent = 'Open billing';
+        card.appendChild(link);
+      }
     }
 
     list.appendChild(card);
