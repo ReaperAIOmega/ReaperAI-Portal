@@ -2,14 +2,10 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const SUPABASE_URL = 'https://itswbmjvuxumfjqkkqgx.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_lgBKt5K8CQCPSC-MaC7s6g_M2iTdWEN';
-const LOGIN_URL = 'https://reaperai.com/login.html?next=portal';
+const LOGIN_URL = 'https://portal.reaperai.com/login.html';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
 });
 
 const redirectToLogin = () => window.location.replace(LOGIN_URL);
@@ -29,6 +25,18 @@ try {
       await supabase.auth.signOut();
       redirectToLogin();
     } else {
+      if (profile.role === 'client') {
+        const { data: security, error: securityError } = await supabase
+          .from('account_security')
+          .select('password_initialized')
+          .eq('profile_id', session.user.id)
+          .single();
+        if (securityError || !security?.password_initialized) {
+          await supabase.auth.signOut();
+          redirectToLogin();
+        }
+      }
+
       if (window.location.hash) {
         window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
       }
