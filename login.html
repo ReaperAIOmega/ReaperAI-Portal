@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Johnson Strategic Solutions | Client Sign In</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="form-card" style="max-width:460px; margin-top:120px;">
+    <h2 class="center">Client Portal Sign In</h2>
+    <p class="center">Use the email and permanent password attached to your Johnson Strategic Solutions client account.</p>
+    <form id="client-login-form">
+      <label for="client-email">Email</label>
+      <input id="client-email" type="email" autocomplete="email" required>
+      <label for="client-password">Password</label>
+      <input id="client-password" type="password" autocomplete="current-password" required>
+      <button id="client-login-submit" type="submit" class="button" style="width:100%;">Sign in securely</button>
+      <p id="client-login-status" class="status-message" role="status" aria-live="polite"></p>
+    </form>
+    <div class="center" style="margin-top:18px;"><a href="https://reaperai.com" style="color:#7fb8ff;text-decoration:none;">Return to Johnson Strategic Solutions</a></div>
+  </div>
+  <div class="footer">© Johnson Strategic Solutions | Secure Client Portal</div>
+  <script type="module" src="auth-login.js"></script>
+</body>
+</html>
