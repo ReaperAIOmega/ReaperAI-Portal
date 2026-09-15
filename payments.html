@@ -13,18 +13,19 @@
     <div class="hero">
       <div class="hero-box">
         <h1>Payments</h1>
-        <p>Payment records displayed here are restricted to your authenticated client account.</p>
+        <p>Your billing records are restricted to your authenticated client account. Checkout links appear only after an administrator creates an approved client-specific payment request.</p>
       </div>
     </div>
 
-    <div class="card">
-      <h3>Billing workspace</h3>
-      <p>Your payment data is now protected by database row-level security. Live invoice and payment rendering will be connected after Stripe is wired into the backend.</p>
+    <div class="table-wrap">
+      <h3>Billing history</h3>
+      <div id="payment-list">Loading billing records…</div>
     </div>
   </div>
 
   <div class="footer">© Johnson Strategic Solutions | Client Platform</div>
   <script src="load-navbar.js"></script>
   <script type="module" src="auth-guard.js"></script>
+  <script type="module" src="payments.js"></script>
 </body>
 </html>
