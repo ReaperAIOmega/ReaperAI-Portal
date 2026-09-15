@@ -13,20 +13,40 @@
     <div class="hero">
       <div class="hero-box">
         <h1>Client Documents</h1>
-        <p>Upload and review files inside your private authenticated workspace. Files are limited to approved document/image formats and 20 MB each.</p>
+        <p>Upload and review files inside your private authenticated workspace. Files are limited to PDF, JPEG, PNG, HEIC, or HEIF and 20 MB each.</p>
+        <p><strong>Security:</strong> never upload passwords, API keys, recovery codes, authentication tokens, or other account secrets.</p>
       </div>
     </div>
 
     <div class="card">
+      <h3>Documents for your active services</h3>
+      <p>Your checklist is generated from the service currently assigned to your account. Required items should be uploaded before the engagement advances.</p>
+      <div id="document-requirements">Loading document checklist…</div>
+    </div>
+
+    <div class="card" style="margin-top:24px;" id="document-upload-card">
       <h3>Upload document</h3>
       <form id="document-upload-form">
         <label for="document-category">Category</label>
         <select id="document-category" required>
           <option value="credit-report">Credit report</option>
           <option value="identification">Identification</option>
+          <option value="proof-of-address">Proof of address</option>
+          <option value="creditor-correspondence">Creditor / collector correspondence</option>
+          <option value="dispute-response">Dispute / investigation response</option>
+          <option value="identity-theft-document">Identity-theft document</option>
+          <option value="business-formation">Business formation document</option>
+          <option value="ein-letter">IRS EIN document</option>
+          <option value="business-address-document">Business address document</option>
+          <option value="ownership-document">Ownership / member document</option>
           <option value="business-document">Business document</option>
-          <option value="income-document">Income document</option>
+          <option value="income-document">Income / revenue document</option>
           <option value="bank-statement">Bank statement</option>
+          <option value="funding-document">Funding / lender document</option>
+          <option value="project-brief">Project brief</option>
+          <option value="workflow-document">Workflow / SOP document</option>
+          <option value="brand-assets">Brand / reference material</option>
+          <option value="supporting-document">Supporting document</option>
           <option value="other">Other</option>
         </select>
         <label for="document-file">File</label>
