@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="visibility:hidden;">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,54 +13,31 @@
     <div class="hero">
       <div class="hero-box">
         <h1>Client Portal</h1>
-        <p>
-          This portal is where clients access services, documents, payments, and account updates.
-          Use the sections below to move through your service workflow.
-        </p>
+        <p>Your authenticated workspace for cases, tasks, documents, payments, and account updates.</p>
       </div>
     </div>
 
     <div class="grid-3">
       <div class="card">
-        <h3>My Dashboard</h3>
-        <p>Go back to your dashboard to view services, next steps, and overall account activity.</p>
+        <h3>Dashboard</h3>
+        <p>Review your account status and current next steps.</p>
         <a href="dashboard.html" class="button">Open Dashboard</a>
       </div>
-
       <div class="card">
-        <h3>My Documents</h3>
-        <p>Access your client document area for uploads, document status, and future file history.</p>
+        <h3>Documents</h3>
+        <p>Access the secure document workspace tied to your client account.</p>
         <a href="client-documents.html" class="button">Open Documents</a>
       </div>
-
       <div class="card">
         <h3>Payments</h3>
-        <p>Review payments, invoices, and future billing activity connected to your services.</p>
+        <p>Review your payment records and billing status.</p>
         <a href="payments.html" class="button">Open Payments</a>
-      </div>
-
-      <div class="card">
-        <h3>Start New Intake</h3>
-        <p>If you need additional services or your situation changed, submit a new intake form.</p>
-        <a href="https://reaperai.com/intake.html" class="button">New Intake</a>
-      </div>
-
-      <div class="card">
-        <h3>View Pricing</h3>
-        <p>Return to the pricing page to review service options, packages, and consultation offers.</p>
-        <a href="https://reaperai.com/pricing.html" class="button">View Pricing</a>
-      </div>
-
-      <div class="card">
-        <h3>Return To Website</h3>
-        <p>Go back to the main Johnson Strategic Solutions website.</p>
-        <a href="https://reaperai.com" class="button">Public Website</a>
       </div>
     </div>
   </div>
 
-  <div class="footer">© Johnson Strategic Solutions | Client Portal</div>
-
+  <div class="footer">© Johnson Strategic Solutions | Client Platform</div>
   <script src="load-navbar.js"></script>
+  <script type="module" src="auth-guard.js"></script>
 </body>
 </html>
