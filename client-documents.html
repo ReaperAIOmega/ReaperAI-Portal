@@ -13,18 +13,38 @@
     <div class="hero">
       <div class="hero-box">
         <h1>Client Documents</h1>
-        <p>Your private document workspace is protected by your authenticated client account.</p>
+        <p>Upload and review files inside your private authenticated workspace. Files are limited to approved document/image formats and 20 MB each.</p>
       </div>
     </div>
 
     <div class="card">
-      <h3>Secure document storage</h3>
-      <p>Uploads are stored in a private Supabase bucket and isolated by authenticated profile. Document upload and review controls will be connected in the next deployment step.</p>
+      <h3>Upload document</h3>
+      <form id="document-upload-form">
+        <label for="document-category">Category</label>
+        <select id="document-category" required>
+          <option value="credit-report">Credit report</option>
+          <option value="identification">Identification</option>
+          <option value="business-document">Business document</option>
+          <option value="income-document">Income document</option>
+          <option value="bank-statement">Bank statement</option>
+          <option value="other">Other</option>
+        </select>
+        <label for="document-file">File</label>
+        <input id="document-file" type="file" accept="application/pdf,image/jpeg,image/png,image/heic,image/heif" required>
+        <button id="document-submit" class="button" type="submit">Upload document</button>
+        <p id="document-status" class="status-message" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+
+    <div class="table-wrap" style="margin-top:24px;">
+      <h3>Your documents</h3>
+      <div id="document-list">Loading documents…</div>
     </div>
   </div>
 
   <div class="footer">© Johnson Strategic Solutions | Client Platform</div>
   <script src="load-navbar.js"></script>
   <script type="module" src="auth-guard.js"></script>
+  <script type="module" src="documents.js"></script>
 </body>
 </html>
