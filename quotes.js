@@ -22,7 +22,9 @@ async function respond(supabase, quote, decision, button) {
     return;
   }
   if (decision === 'accept') {
-    window.alert('Quote accepted. A pending payment record has been created in your billing workspace.');
+    window.alert(data.billing_deferred
+      ? 'Quote accepted. Billing remains deferred until the service is completed and released for payment.'
+      : 'Quote accepted. A pending payment record has been created in your billing workspace.');
   }
   await loadQuotes(supabase);
 }
@@ -80,6 +82,9 @@ async function loadQuotes(supabase) {
       row.append(accept, decline);
       card.appendChild(row);
     } else if (quote.status === 'accepted') {
+      const note = document.createElement('p');
+      note.textContent = 'This quote is accepted. If billing is eligible, the corresponding payment record will appear in Billing; deferred services remain on hold until completion.';
+      card.appendChild(note);
       const link = document.createElement('a');
       link.href = 'payments.html';
       link.className = 'button';
