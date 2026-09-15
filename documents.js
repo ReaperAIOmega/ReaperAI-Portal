@@ -10,9 +10,14 @@ const categoryInput = document.getElementById('document-category');
 const submitButton = document.getElementById('document-submit');
 const status = document.getElementById('document-status');
 const list = document.getElementById('document-list');
+const requirementsBox = document.getElementById('document-requirements');
+const uploadCard = document.getElementById('document-upload-card');
 
 const fmtDate = (value) => value ? new Date(value).toLocaleString() : '—';
 const safeName = (value) => String(value || 'document').replace(/[^A-Za-z0-9._-]+/g, '_').slice(-120);
+const labelForCategory = (value) => String(value || 'document')
+  .replace(/-/g, ' ')
+  .replace(/\b\w/g, (c) => c.toUpperCase());
 
 async function getClient(supabase) {
   const { data, error } = await supabase.from('clients').select('id,status').maybeSingle();
@@ -20,28 +25,90 @@ async function getClient(supabase) {
   return data;
 }
 
-async function loadDocuments(context) {
-  const { supabase } = context;
-  const client = await getClient(supabase);
-  if (!client) {
-    list.textContent = 'No client record is linked to this account.';
-    form?.setAttribute('hidden', '');
+function bestDocumentForCategory(documents, category) {
+  const matches = documents.filter((row) => row.category === category);
+  const rank = { approved: 4, pending: 3, changes_requested: 2, rejected: 1 };
+  return matches.sort((a, b) => (rank[b.review_status] || 0) - (rank[a.review_status] || 0))[0] || null;
+}
+
+function renderRequirements(cases, requirements, documents) {
+  requirementsBox.replaceChildren();
+  const activeCases = cases.filter((row) => !['completed','closed','cancelled'].includes(String(row.status || '').toLowerCase()));
+  if (!activeCases.length) {
+    requirementsBox.textContent = 'No active service checklist is assigned yet.';
     return;
   }
 
-  const { data, error } = await supabase
-    .from('documents')
-    .select('id,file_name,category,review_status,storage_path,uploaded_at')
-    .eq('client_id', client.id)
-    .order('uploaded_at', { ascending: false });
+  for (const caseRow of activeCases) {
+    const caseRequirements = requirements.filter((row) => row.case_type === caseRow.case_type);
+    const section = document.createElement('div');
+    section.className = 'card';
+    section.style.marginTop = '16px';
 
+    const heading = document.createElement('h3');
+    heading.textContent = caseRow.title || caseRow.case_type;
+    section.appendChild(heading);
+
+    if (!caseRequirements.length) {
+      const none = document.createElement('p');
+      none.textContent = 'No service-specific documents are currently required for this engagement.';
+      section.appendChild(none);
+      requirementsBox.appendChild(section);
+      continue;
+    }
+
+    const table = document.createElement('table');
+    table.innerHTML = '<thead><tr><th>Document</th><th>Requirement</th><th>Status</th><th>Action</th></tr></thead>';
+    const tbody = document.createElement('tbody');
+
+    for (const requirement of caseRequirements) {
+      const documentRow = bestDocumentForCategory(documents, requirement.document_category);
+      const tr = document.createElement('tr');
+
+      const documentCell = document.createElement('td');
+      const title = document.createElement('strong');
+      title.textContent = labelForCategory(requirement.document_category);
+      const description = document.createElement('div');
+      description.textContent = requirement.description || '';
+      documentCell.append(title, description);
+
+      const requiredCell = document.createElement('td');
+      requiredCell.textContent = requirement.required ? 'Required' : 'Optional';
+
+      const stateCell = document.createElement('td');
+      if (!documentRow) stateCell.textContent = 'Not uploaded';
+      else if (documentRow.review_status === 'approved') stateCell.textContent = 'Approved';
+      else if (documentRow.review_status === 'changes_requested') stateCell.textContent = 'Changes requested';
+      else stateCell.textContent = 'Uploaded · pending review';
+
+      const actionCell = document.createElement('td');
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = documentRow?.review_status === 'approved' ? 'btn-secondary' : 'button';
+      button.textContent = documentRow?.review_status === 'approved' ? 'Approved' : (documentRow ? 'Upload replacement' : 'Upload');
+      button.disabled = documentRow?.review_status === 'approved';
+      if (!button.disabled) {
+        button.addEventListener('click', () => {
+          categoryInput.value = requirement.document_category;
+          uploadCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          fileInput?.focus();
+        });
+      }
+      actionCell.appendChild(button);
+
+      tr.append(documentCell, requiredCell, stateCell, actionCell);
+      tbody.appendChild(tr);
+    }
+
+    table.appendChild(tbody);
+    section.appendChild(table);
+    requirementsBox.appendChild(section);
+  }
+}
+
+function renderDocumentTable(supabase, documents) {
   list.replaceChildren();
-  if (error) {
-    console.error('Document list error', error);
-    list.textContent = 'Documents could not be loaded.';
-    return;
-  }
-  if (!data?.length) {
+  if (!documents.length) {
     list.textContent = 'No documents uploaded yet.';
     return;
   }
@@ -49,9 +116,9 @@ async function loadDocuments(context) {
   const table = document.createElement('table');
   table.innerHTML = '<thead><tr><th>File</th><th>Category</th><th>Review</th><th>Uploaded</th><th>Access</th></tr></thead>';
   const tbody = document.createElement('tbody');
-  for (const documentRow of data) {
+  for (const documentRow of documents) {
     const tr = document.createElement('tr');
-    for (const value of [documentRow.file_name, documentRow.category, documentRow.review_status, fmtDate(documentRow.uploaded_at)]) {
+    for (const value of [documentRow.file_name, labelForCategory(documentRow.category), documentRow.review_status, fmtDate(documentRow.uploaded_at)]) {
       const td = document.createElement('td');
       td.textContent = value || '—';
       tr.appendChild(td);
@@ -79,6 +146,56 @@ async function loadDocuments(context) {
   }
   table.appendChild(tbody);
   list.appendChild(table);
+}
+
+async function loadDocuments(context) {
+  const { supabase } = context;
+  const client = await getClient(supabase);
+  if (!client) {
+    list.textContent = 'No client record is linked to this account.';
+    requirementsBox.textContent = 'No service checklist is available.';
+    form?.setAttribute('hidden', '');
+    return;
+  }
+
+  const [{ data: documents, error: documentsError }, { data: cases, error: casesError }] = await Promise.all([
+    supabase
+      .from('documents')
+      .select('id,file_name,category,review_status,storage_path,uploaded_at')
+      .eq('client_id', client.id)
+      .order('uploaded_at', { ascending: false }),
+    supabase
+      .from('cases')
+      .select('id,case_type,title,status,stage')
+      .eq('client_id', client.id)
+      .order('created_at', { ascending: false }),
+  ]);
+
+  if (documentsError || casesError) {
+    console.error('Document workspace load error', documentsError || casesError);
+    list.textContent = 'Documents could not be loaded.';
+    requirementsBox.textContent = 'Document checklist could not be loaded.';
+    return;
+  }
+
+  const caseTypes = [...new Set((cases || []).map((row) => row.case_type).filter(Boolean))];
+  let requirements = [];
+  if (caseTypes.length) {
+    const { data, error } = await supabase
+      .from('document_requirements')
+      .select('case_type,document_category,required,description')
+      .in('case_type', caseTypes)
+      .order('required', { ascending: false });
+    if (error) {
+      console.error('Document requirements load error', error);
+      requirementsBox.textContent = 'Document checklist could not be loaded.';
+    } else {
+      requirements = data || [];
+    }
+  }
+
+  renderRequirements(cases || [], requirements, documents || []);
+  renderDocumentTable(supabase, documents || []);
 }
 
 form?.addEventListener('submit', async (event) => {
@@ -137,7 +254,8 @@ form?.addEventListener('submit', async (event) => {
 
   if (metadataError) {
     console.error('Document metadata error', metadataError);
-    status.textContent = 'The file uploaded but its record could not be finalized. Contact support before uploading it again.';
+    await supabase.storage.from('client-documents').remove([path]).catch(() => undefined);
+    status.textContent = 'The upload could not be finalized. The incomplete file was removed; please try again.';
     submitButton.disabled = false;
     submitButton.textContent = 'Upload document';
     return;
@@ -153,4 +271,5 @@ form?.addEventListener('submit', async (event) => {
 ready.then(loadDocuments).catch((error) => {
   console.error('Document workspace error', error);
   if (list) list.textContent = 'Document workspace is unavailable.';
+  if (requirementsBox) requirementsBox.textContent = 'Document checklist is unavailable.';
 });
