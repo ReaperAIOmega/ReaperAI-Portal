@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="visibility:hidden;">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Johnson Strategic Solutions | Client Documents</title>
+  <title>Johnson Strategic Solutions | Documents</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -13,119 +13,18 @@
     <div class="hero">
       <div class="hero-box">
         <h1>Client Documents</h1>
-        <p>
-          This area is for document uploads, file tracking, and future access to your service-related records.
-          Upload credit reports, ID documents, business paperwork, and supporting files here.
-        </p>
+        <p>Your private document workspace is protected by your authenticated client account.</p>
       </div>
     </div>
 
-    <div class="stats-grid">
-      <div class="stat-card">
-        <h3>Files Uploaded</h3>
-        <div class="stat-number">4</div>
-      </div>
-      <div class="stat-card">
-        <h3>Pending Review</h3>
-        <div class="stat-number">2</div>
-      </div>
-      <div class="stat-card">
-        <h3>Approved Files</h3>
-        <div class="stat-number">2</div>
-      </div>
-      <div class="stat-card">
-        <h3>Next Action</h3>
-        <div class="stat-number">Upload</div>
-      </div>
-    </div>
-
-    <div class="grid-3">
-      <div class="card">
-        <h3>Upload Credit Report</h3>
-        <p>
-          Upload your credit report here for review, dispute planning, and account analysis.
-        </p>
-        <a href="#" class="button">Coming Soon</a>
-      </div>
-
-      <div class="card">
-        <h3>Upload ID Documents</h3>
-        <p>
-          Submit identification and proof of address documents for verification and file preparation.
-        </p>
-        <a href="#" class="button">Coming Soon</a>
-      </div>
-
-      <div class="card">
-        <h3>Upload Business Documents</h3>
-        <p>
-          Upload EIN letters, formation documents, bank documents, and business records.
-        </p>
-        <a href="#" class="button">Coming Soon</a>
-      </div>
-
-      <div class="card">
-        <h3>My Uploaded Files</h3>
-        <p>
-          Review your uploaded documents and future file history from one place.
-        </p>
-        <a href="#" class="button">Coming Soon</a>
-      </div>
-
-      <div class="card">
-        <h3>Back To Dashboard</h3>
-        <p>
-          Return to your dashboard to review service progress, updates, and next steps.
-        </p>
-        <a href="dashboard.html" class="button">Open Dashboard</a>
-      </div>
-
-      <div class="card">
-        <h3>Need Another Service?</h3>
-        <p>
-          If your situation changed or you need additional services, submit a new intake form.
-        </p>
-        <a href="https://reaperai.com/intake.html" class="button">New Intake</a>
-      </div>
-    </div>
-
-    <div class="table-wrap">
-      <h3>Recent File Activity</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Document Type</th>
-            <th>Status</th>
-            <th>Date</th>
-            <th>Next Step</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Credit Report</td>
-            <td><span class="status status-new">Uploaded</span></td>
-            <td>Today</td>
-            <td>Pending Review</td>
-          </tr>
-          <tr>
-            <td>Driver License</td>
-            <td><span class="status status-active">Approved</span></td>
-            <td>Yesterday</td>
-            <td>On File</td>
-          </tr>
-          <tr>
-            <td>Proof of Address</td>
-            <td><span class="status status-pending">Pending</span></td>
-            <td>2 days ago</td>
-            <td>Verification Review</td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="card">
+      <h3>Secure document storage</h3>
+      <p>Uploads are stored in a private Supabase bucket and isolated by authenticated profile. Document upload and review controls will be connected in the next deployment step.</p>
     </div>
   </div>
 
-  <div class="footer">© Johnson Strategic Solutions | Client Portal</div>
-
+  <div class="footer">© Johnson Strategic Solutions | Client Platform</div>
   <script src="load-navbar.js"></script>
+  <script type="module" src="auth-guard.js"></script>
 </body>
 </html>
