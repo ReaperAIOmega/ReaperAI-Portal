@@ -5,14 +5,14 @@ import { readFile } from 'node:fs/promises';
 const source = await readFile(new URL('../initialize-password.js', import.meta.url), 'utf8');
 const html = await readFile(new URL('../initialize-password.html', import.meta.url), 'utf8');
 
-function evaluate(search) {
+function evaluate(search, hash = '') {
   const calls = [];
   const document = {
     title: 'Portal activation',
     getElementById: () => ({ addEventListener: () => {}, disabled: false, textContent: '' }),
   };
   const window = {
-    location: { search, pathname: '/initialize-password.html', hash: '' },
+    location: { search, pathname: '/initialize-password.html', hash },
     history: { replaceState: (_state, _title, path) => calls.push(path) },
   };
   const execute = new Function('document', 'window', 'URLSearchParams', source);
@@ -36,8 +36,16 @@ test('missing token does not fabricate activation context or rewrite history', (
 });
 
 test('token consumption still comes from the original URL before it is replaced', () => {
-  const readAt = source.indexOf("new URLSearchParams(window.location.search).get('token')");
+  const readAt = source.indexOf("new URLSearchParams(window.location.hash.slice(1)).get('token')");
   const stripAt = source.indexOf('window.history.replaceState');
   const submitAt = source.indexOf("form?.addEventListener('submit'");
   assert.ok(readAt > 0 && stripAt > readAt && submitAt > stripAt);
+});
+
+test('new fragment-only activation links are cleared from visible URL', () => {
+  assert.deepEqual(evaluate('', '#token=synthetic-fragment-token'), ['/initialize-password.html']);
+});
+
+test('previous query-style activation links are still supported during migration', () => {
+  assert.deepEqual(evaluate('?token=old-synthetic-token', ''), ['/initialize-password.html']);
 });
