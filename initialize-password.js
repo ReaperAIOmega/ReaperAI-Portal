@@ -12,7 +12,7 @@ const token = new URLSearchParams(window.location.hash.slice(1)).get('token')
 // Strip one-time activation credentials from browser history and referrers
 // immediately after reading them; never wait for form submission.
 if (token) {
-  window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+  window.history.replaceState({}, document.title, window.location.pathname);
 }
 
 const validPassword = (value) => value.length >= 14 && /[a-z]/.test(value) && /[A-Z]/.test(value) && /\d/.test(value) && /[^A-Za-z0-9]/.test(value);
