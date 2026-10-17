@@ -25,33 +25,39 @@ try {
       await supabase.auth.signOut();
       redirectToLogin();
     } else {
+      let accountReady = profile.role === 'admin';
       if (profile.role === 'client') {
         const { data: security, error: securityError } = await supabase
           .from('account_security')
           .select('password_initialized')
           .eq('profile_id', session.user.id)
           .single();
-        if (securityError || !security?.password_initialized) {
+        accountReady = !securityError && security?.password_initialized === true;
+        if (!accountReady) {
+          // Do not reveal the client workspace or emit auth-ready while a
+          // sign-out/redirect is pending. RLS remains the server-side boundary.
           await supabase.auth.signOut();
           redirectToLogin();
         }
       }
 
-      if (window.location.hash) {
-        window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+      if (accountReady) {
+        if (window.location.hash) {
+          window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+        }
+
+        window.reaperAuth = Object.freeze({ supabase, session, profile });
+        document.documentElement.style.visibility = 'visible';
+        document.dispatchEvent(new CustomEvent('reaper:auth-ready', { detail: window.reaperAuth }));
+
+        document.addEventListener('click', async (event) => {
+          const target = event.target.closest?.('[data-signout]');
+          if (!target) return;
+          event.preventDefault();
+          await supabase.auth.signOut();
+          redirectToLogin();
+        });
       }
-
-      window.reaperAuth = Object.freeze({ supabase, session, profile });
-      document.documentElement.style.visibility = 'visible';
-      document.dispatchEvent(new CustomEvent('reaper:auth-ready', { detail: window.reaperAuth }));
-
-      document.addEventListener('click', async (event) => {
-        const target = event.target.closest?.('[data-signout]');
-        if (!target) return;
-        event.preventDefault();
-        await supabase.auth.signOut();
-        redirectToLogin();
-      });
     }
   }
 } catch (error) {
