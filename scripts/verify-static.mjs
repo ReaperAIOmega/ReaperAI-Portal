@@ -11,5 +11,25 @@ const privilegedPattern=new RegExp([
 for(const file of required){try{if(!(await stat(join(root,file))).isFile())failures.push(`Missing required file: ${file}`);}catch{failures.push(`Missing required file: ${file}`);}}
 async function walk(dir){const out=[];for(const name of await readdir(dir)){if(name==='.git'||name==='node_modules')continue;const path=join(dir,name);const s=await stat(path);if(s.isDirectory())out.push(...await walk(path));else out.push(path);}return out;}
 const files=await walk(root);
+const protectedPages=[
+  'index.html','dashboard.html','client-portal.html','client-documents.html',
+  'payments.html','messages.html','credit-progress.html','funding-progress.html',
+  'quotes.html','agreements.html',
+];
+// Static defense-in-depth only: auth/authorization must also be tested against
+// the live backend and RLS. Prevent accidental removal of the client guard.
+for(const page of protectedPages){
+  try{
+    const html=await readFile(join(root,page),'utf8');
+    if(!/<html\b[^>]*style=["'][^"']*visibility\s*:\s*hidden/i.test(html)){
+      failures.push('Protected portal page is not hidden before auth: '+page);
+    }
+    if(!/<script\b[^>]*type=["']module["'][^>]*src=["'](?:\.\/)?auth-guard\.js["'][^>]*>/i.test(html)){
+      failures.push('Protected portal page is missing module auth guard: '+page);
+    }
+  }catch{
+    failures.push('Could not verify protected portal page: '+page);
+  }
+}
 for(const file of files.filter(f=>/\.(html|js|mjs)$/.test(f))){const text=await readFile(file,'utf8');const rel=file.slice(root.length+1);if(privilegedPattern.test(text))failures.push(`Privileged secret identifier in static source: ${rel}`);if(/http:\/\/reaperai\.com/i.test(text))failures.push(`Insecure ReaperAI URL in ${rel}`);if(file.endsWith('.html')){for(const match of text.matchAll(/(?:href|src)=["']([^"']+)["']/g)){const ref=match[1];if(!ref||ref.startsWith('#')||/^(https?:|mailto:|tel:|data:|javascript:)/i.test(ref))continue;const target=normalize(join(dirname(file),ref.split(/[?#]/)[0]));try{if(!(await stat(target)).isFile())failures.push(`Broken local reference in ${rel}: ${ref}`);}catch{failures.push(`Broken local reference in ${rel}: ${ref}`);}}}}
 if(failures.length){console.error(failures.join('\n'));process.exit(1);}console.log(`Portal static verification passed for ${files.length} files.`);
