@@ -21,11 +21,11 @@ try {
       .eq('id', session.user.id)
       .single();
 
-    if (profileError || !profile || !['client', 'admin'].includes(profile.role) || profile.status !== 'active') {
+    if (profileError || !profile || profile.role !== 'client' || profile.status !== 'active') {
       await supabase.auth.signOut();
       redirectToLogin();
     } else {
-      let accountReady = profile.role === 'admin';
+      let accountReady = false;
       if (profile.role === 'client') {
         const { data: security, error: securityError } = await supabase
           .from('account_security')
