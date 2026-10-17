@@ -108,13 +108,15 @@ test('valid active client gets only its authorized portal context', async () => 
   assert.ok(Object.isFrozen(window.reaperAuth));
 });
 
-test('active admin may open portal without client activation flags', async () => {
-  const { calls, window } = await scenario({
+test('admin sessions cannot enter customer-only portal', async () => {
+  const { calls, window, document } = await scenario({
     profile: { id: 'test-user-1', role: 'admin', status: 'active' },
   });
-  assert.equal(calls.readyEvents.length, 1);
-  assert.ok(!calls.queried.includes('account_security'));
-  assert.equal(window.reaperAuth.profile.role, 'admin');
+  assert.equal(calls.signOut, 1);
+  assert.equal(calls.redirects.length, 1);
+  assert.equal(calls.readyEvents.length, 0);
+  assert.equal(document.documentElement.style.visibility, 'hidden');
+  assert.equal(window.reaperAuth, undefined);
 });
 
 test('invalid profile or profile lookup error never reveals portal', async () => {
