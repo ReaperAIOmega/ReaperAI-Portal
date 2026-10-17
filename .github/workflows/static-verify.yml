@@ -17,4 +17,4 @@ jobs:
       - name: Verify static application
         run: node scripts/verify-static.mjs
       - name: Exercise portal authorization guard (no network)
-        run: node --test scripts/auth-guard.test.mjs
+        run: node --test scripts/auth-guard.test.mjs scripts/activation-url.test.mjs
