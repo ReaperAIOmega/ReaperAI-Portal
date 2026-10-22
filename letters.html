@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" style="visibility:hidden;">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Johnson Strategic Solutions | Letters</title>
+<link rel="stylesheet" href="styles.css">
+</head><body>
+<div id="navbar" data-navbar="navbar-client.html"></div>
+<main class="container">
+  <section class="hero"><div class="hero-box">
+    <h1>Your Letters</h1>
+    <p>Generate a copy of a letter approved for your account, download your PDF, or request printing and mailing through LetterStream. Mailing requests are reviewed and are not automatically sent.</p>
+  </div></section>
+  <section class="card" style="margin-bottom:22px;padding:24px">
+    <h2>Approved letter options</h2>
+    <p>Only letter content approved for your account appears here. You may review it before choosing how to proceed.</p>
+    <div id="letter-authorizations" aria-live="polite">Loading…</div>
+  </section>
+  <section class="card" style="margin-bottom:22px;padding:24px">
+    <h2>Generated letters</h2>
+    <p>Download a copy without requesting a mailing. If you request LetterStream, we will review the exact generated version and confirm the mailing separately.</p>
+    <div id="generated-letters" aria-live="polite">Loading…</div>
+  </section>
+  <p id="letter-action-status" role="status" aria-live="polite"></p>
+</main>
+<div class="footer">© Johnson Strategic Solutions | Secure Client Portal</div>
+<script src="https://cdn.jsdelivr.net/npm/pdfmake@0.2.15/build/pdfmake.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfmake@0.2.15/build/vfs_fonts.js"></script>
+<script src="load-navbar.js"></script>
+<script type="module" src="auth-guard.js"></script>
+<script type="module" src="letters.js"></script>
+</body></html>
