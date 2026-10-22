@@ -16,3 +16,7 @@ jobs:
           node-version: 22
       - name: Verify static application
         run: node scripts/verify-static.mjs
+      - name: Check letter UI JavaScript syntax
+        run: node --check letters.js
+      - name: Validate letter workflow integration
+        run: node --test scripts/letters.test.mjs
