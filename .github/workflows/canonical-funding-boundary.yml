@@ -1,0 +1,22 @@
+name: Canonical Funding Document Boundary
+on:
+  pull_request:
+    paths:
+      - 'documents.js'
+      - 'tests/canonical-document-boundary.test.mjs'
+      - '.github/workflows/canonical-funding-boundary.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'documents.js'
+      - 'tests/canonical-document-boundary.test.mjs'
+      - '.github/workflows/canonical-funding-boundary.yml'
+permissions:
+  contents: read
+jobs:
+  security-boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: node --check documents.js
+      - run: node --test tests/canonical-document-boundary.test.mjs
