@@ -17,6 +17,12 @@ let activeUploadCaseId = null;
 const fmtDate = (value) => value ? new Date(value).toLocaleString() : '—';
 const labelForCategory = (value) => String(value || 'document').replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
+// Canonical funding deliverables are private and may never be read via generic signed Storage URLs.
+function isCanonicalFundingArtifact(row) {
+  return row?.category === 'funding-document'
+    || String(row?.storage_path || '').startsWith('funding-artifacts/');
+}
+
 async function getClient(supabase) {
   const { data, error } = await supabase.from('clients').select('id,status').maybeSingle();
   if (error) throw error;
@@ -24,7 +30,8 @@ async function getClient(supabase) {
 }
 
 function bestDocumentForCategory(documents, category, caseId) {
-  const matches = documents.filter((row) => row.category === category && (!caseId || !row.case_id || row.case_id === caseId));
+  const matches = documents.filter((row) => !isCanonicalFundingArtifact(row)
+    && row.category === category && (!caseId || !row.case_id || row.case_id === caseId));
   const rank = { approved: 4, pending: 3, changes_requested: 2, rejected: 1 };
   return matches.sort((a, b) => (rank[b.review_status] || 0) - (rank[a.review_status] || 0))[0] || null;
 }
@@ -55,7 +62,9 @@ function renderRequirements(cases, requirements, documents) {
     table.innerHTML = '<thead><tr><th>Document</th><th>Requirement</th><th>Status</th><th>Action</th></tr></thead>';
     const tbody = document.createElement('tbody');
     for (const requirement of caseRequirements) {
-      const documentRow = bestDocumentForCategory(documents, requirement.document_category, caseRow.id);
+      const canonicalDeliverable = requirement.document_category === 'funding-document';
+      const documentRow = canonicalDeliverable ? null
+        : bestDocumentForCategory(documents, requirement.document_category, caseRow.id);
       const tr = document.createElement('tr');
       const documentCell = document.createElement('td');
       const title = document.createElement('strong');
@@ -66,7 +75,8 @@ function renderRequirements(cases, requirements, documents) {
       const requiredCell = document.createElement('td');
       requiredCell.textContent = requirement.required ? 'Required' : 'Optional';
       const stateCell = document.createElement('td');
-      if (!documentRow) stateCell.textContent = 'Not uploaded';
+      if (canonicalDeliverable) stateCell.textContent = 'Restricted deliverable · not available until separately authorized';
+      else if (!documentRow) stateCell.textContent = 'Not uploaded';
       else if (documentRow.review_status === 'approved') stateCell.textContent = 'Approved';
       else if (documentRow.review_status === 'changes_requested') stateCell.textContent = 'Changes requested';
       else stateCell.textContent = 'Uploaded · pending review';
@@ -75,7 +85,8 @@ function renderRequirements(cases, requirements, documents) {
       button.type = 'button';
       button.className = documentRow?.review_status === 'approved' ? 'btn-secondary' : 'button';
       button.textContent = documentRow?.review_status === 'approved' ? 'Approved' : (documentRow ? 'Upload replacement' : 'Upload');
-      button.disabled = documentRow?.review_status === 'approved';
+      button.disabled = canonicalDeliverable || documentRow?.review_status === 'approved';
+      if (canonicalDeliverable) button.textContent = 'Not available';
       if (!button.disabled) button.addEventListener('click', () => {
         activeUploadCaseId = caseRow.id;
         categoryInput.value = requirement.document_category;
@@ -118,7 +129,12 @@ function renderDocumentTable(supabase, documents) {
       if (signedError || !signed?.signedUrl) { status.textContent = 'Secure document link could not be created.'; return; }
       window.open(signed.signedUrl, '_blank', 'noopener,noreferrer');
     });
-    access.appendChild(open);
+    if (isCanonicalFundingArtifact(documentRow)) {
+      // Even a generic "approved" documents.review_status must not grant canonical retrieval.
+      const held = document.createElement('span');
+      held.textContent = 'Private funding delivery requires exact-version authorization';
+      access.appendChild(held);
+    } else access.appendChild(open);
     tr.appendChild(access);
     tbody.appendChild(tr);
   }
