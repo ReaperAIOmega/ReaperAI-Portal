@@ -20,3 +20,6 @@ ready.then(context=>{if(!runtime.staging)return;
 
 import {checkExistingIntakeIsolation} from "./existing-intake-security.mjs";
 ready.then(context=>{if(!runtime.staging)return;const b=document.getElementById("check-new-intake");b.disabled=false;b.addEventListener("click",async()=>{b.disabled=true;try{document.getElementById("new-intake-result").textContent=JSON.stringify(await checkExistingIntakeIsolation(context.supabase,runtime),null,2);}catch(e){document.getElementById("new-intake-result").textContent=JSON.stringify({passed:false,error:e.message});}finally{b.disabled=false;}});});
+
+import {checkInternalServiceDraftIsolation} from './internal-service-draft-security.mjs';
+ready.then(context=>{if(!runtime.staging)return;const b=document.getElementById('check-internal-service');b.disabled=false;b.addEventListener('click',async()=>{b.disabled=true;try{document.getElementById('internal-service-result').textContent=JSON.stringify(await checkInternalServiceDraftIsolation(context.supabase,runtime),null,2);}catch(e){document.getElementById('internal-service-result').textContent=JSON.stringify({passed:false,error:e.message});}finally{b.disabled=false;}});});
