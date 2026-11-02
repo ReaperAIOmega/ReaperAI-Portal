@@ -1,8 +1,10 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/+esm';
 
-const SUPABASE_URL = 'https://itswbmjvuxumfjqkkqgx.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_lgBKt5K8CQCPSC-MaC7s6g_M2iTdWEN';
-const LOGIN_URL = 'https://portal.reaperai.com/login.html';
+import { resolveRuntime } from './runtime-config.mjs';
+const runtime = resolveRuntime(window.location, 'portal');
+const SUPABASE_URL = runtime.url;
+const SUPABASE_PUBLISHABLE_KEY = runtime.key;
+const LOGIN_URL = runtime.page('/login.html');
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
@@ -12,7 +14,8 @@ const redirectToLogin = () => window.location.replace(LOGIN_URL);
 
 try {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError || !session) {
+  if (sessionError || !session || !runtime.emailAllowed(session.user?.email)) {
+    if (session) await supabase.auth.signOut({ scope: 'local' });
     redirectToLogin();
   } else {
     const { data: profile, error: profileError } = await supabase
@@ -34,6 +37,7 @@ try {
         if (securityError || !security?.password_initialized) {
           await supabase.auth.signOut();
           redirectToLogin();
+          throw new Error('Account security validation failed');
         }
       }
 

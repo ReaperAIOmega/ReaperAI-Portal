@@ -1,7 +1,9 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/+esm';
 
-const SUPABASE_URL = 'https://itswbmjvuxumfjqkkqgx.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_lgBKt5K8CQCPSC-MaC7s6g_M2iTdWEN';
+import { resolveRuntime } from './runtime-config.mjs';
+const runtime = resolveRuntime(window.location, 'portal');
+const SUPABASE_URL = runtime.url;
+const SUPABASE_PUBLISHABLE_KEY = runtime.key;
 const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
 });
@@ -17,13 +19,20 @@ const emailParam = params.get('email');
 if (emailParam && emailInput) emailInput.value = emailParam;
 
 const existing = await supabase.auth.getSession();
-if (existing.data?.session) window.location.replace('/');
+if (existing.data?.session) {
+  if (runtime.emailAllowed(existing.data.session.user?.email)) window.location.replace('/');
+  else await supabase.auth.signOut({ scope: 'local' });
+}
 
 form?.addEventListener('submit', async (event) => {
   event.preventDefault();
   const email = emailInput?.value.trim().toLowerCase();
   const password = passwordInput?.value ?? '';
   if (!email || !password) return;
+  if (!runtime.emailAllowed(email)) {
+    status.textContent = 'This identity is not permitted in this environment.';
+    return;
+  }
 
   submitButton.disabled = true;
   submitButton.textContent = 'Signing in...';
