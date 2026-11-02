@@ -1,3 +1,4 @@
+import {fundingArtifactFromPath,fundingArtifactDownloadsEnabled,retrieveFundingArtifact} from './funding-artifact-download.mjs';
 const ready = window.reaperAuth
   ? Promise.resolve(window.reaperAuth)
   : new Promise((resolve) => document.addEventListener('reaper:auth-ready', (event) => resolve(event.detail), { once: true }));
@@ -13,10 +14,15 @@ const list = document.getElementById('document-list');
 const requirementsBox = document.getElementById('document-requirements');
 const uploadCard = document.getElementById('document-upload-card');
 let activeUploadCaseId = null;
+let documentWorkspaceReady = false;
+if (submitButton) submitButton.disabled = true;
 
 const fmtDate = (value) => value ? new Date(value).toLocaleString() : '—';
 const labelForCategory = (value) => String(value || 'document').replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
+function isCanonicalFundingArtifact(row) {
+  return row?.category === 'funding-document' || String(row?.storage_path || '').startsWith('funding-artifacts/');
+}
 async function getClient(supabase) {
   const { data, error } = await supabase.from('clients').select('id,status').maybeSingle();
   if (error) throw error;
@@ -24,7 +30,7 @@ async function getClient(supabase) {
 }
 
 function bestDocumentForCategory(documents, category, caseId) {
-  const matches = documents.filter((row) => row.category === category && (!caseId || !row.case_id || row.case_id === caseId));
+  const matches = documents.filter((row) => !isCanonicalFundingArtifact(row) && row.category === category && (!caseId || !row.case_id || row.case_id === caseId));
   const rank = { approved: 4, pending: 3, changes_requested: 2, rejected: 1 };
   return matches.sort((a, b) => (rank[b.review_status] || 0) - (rank[a.review_status] || 0))[0] || null;
 }
@@ -55,7 +61,8 @@ function renderRequirements(cases, requirements, documents) {
     table.innerHTML = '<thead><tr><th>Document</th><th>Requirement</th><th>Status</th><th>Action</th></tr></thead>';
     const tbody = document.createElement('tbody');
     for (const requirement of caseRequirements) {
-      const documentRow = bestDocumentForCategory(documents, requirement.document_category, caseRow.id);
+      const canonicalDeliverable = requirement.document_category === 'funding-document';
+      const documentRow = canonicalDeliverable ? null : bestDocumentForCategory(documents, requirement.document_category, caseRow.id);
       const tr = document.createElement('tr');
       const documentCell = document.createElement('td');
       const title = document.createElement('strong');
@@ -66,7 +73,8 @@ function renderRequirements(cases, requirements, documents) {
       const requiredCell = document.createElement('td');
       requiredCell.textContent = requirement.required ? 'Required' : 'Optional';
       const stateCell = document.createElement('td');
-      if (!documentRow) stateCell.textContent = 'Not uploaded';
+      if (canonicalDeliverable) stateCell.textContent = 'Restricted deliverable; separate exact-version authorization required';
+      else if (!documentRow) stateCell.textContent = 'Not uploaded';
       else if (documentRow.review_status === 'approved') stateCell.textContent = 'Approved';
       else if (documentRow.review_status === 'changes_requested') stateCell.textContent = 'Changes requested';
       else stateCell.textContent = 'Uploaded · pending review';
@@ -75,7 +83,8 @@ function renderRequirements(cases, requirements, documents) {
       button.type = 'button';
       button.className = documentRow?.review_status === 'approved' ? 'btn-secondary' : 'button';
       button.textContent = documentRow?.review_status === 'approved' ? 'Approved' : (documentRow ? 'Upload replacement' : 'Upload');
-      button.disabled = documentRow?.review_status === 'approved';
+      button.disabled = canonicalDeliverable || documentRow?.review_status === 'approved';
+      if (canonicalDeliverable) button.textContent = 'Not available';
       if (!button.disabled) button.addEventListener('click', () => {
         activeUploadCaseId = caseRow.id;
         categoryInput.value = requirement.document_category;
@@ -111,14 +120,32 @@ function renderDocumentTable(supabase, documents) {
     const access = document.createElement('td');
     const open = document.createElement('button');
     open.type = 'button'; open.className = 'btn-secondary'; open.textContent = 'Open';
+    const fundingDocumentPath=String(documentRow.storage_path||'').startsWith('funding-artifacts/');
+    let artifact=null;
+    try {artifact=fundingArtifactFromPath(documentRow.storage_path);}catch {open.disabled=true;open.textContent='Access unavailable';}
+    if(artifact&&!fundingArtifactDownloadsEnabled){open.disabled=true;open.textContent='Funding download unavailable';}
+
     open.addEventListener('click', async () => {
       open.disabled = true;
+      if(fundingDocumentPath&&!artifact){status.textContent='Funding document access is unavailable.';return;}
+      if(isCanonicalFundingArtifact(documentRow)&&!artifact){status.textContent='Funding document access is unavailable.';return;}
+      if(artifact){
+        try {
+          const download=await retrieveFundingArtifact(supabase,artifact.artifactId);
+          const url=URL.createObjectURL(download.blob),link=document.createElement('a');
+          link.href=url;link.download=download.fileName;link.click();
+          setTimeout(()=>URL.revokeObjectURL(url),60000);
+          status.textContent='Verified file is ready to save.';
+        }catch(error){status.textContent=error.message||'Funding document could not be retrieved.';}
+        finally {open.disabled=!fundingArtifactDownloadsEnabled;}
+        return;
+      }
       const { data: signed, error: signedError } = await supabase.storage.from('client-documents').createSignedUrl(documentRow.storage_path, 60);
       open.disabled = false;
       if (signedError || !signed?.signedUrl) { status.textContent = 'Secure document link could not be created.'; return; }
       window.open(signed.signedUrl, '_blank', 'noopener,noreferrer');
     });
-    access.appendChild(open);
+    if(isCanonicalFundingArtifact(documentRow)&&!artifact){const held=document.createElement('span');held.textContent='Private funding delivery requires exact-version authorization';access.appendChild(held);}else access.appendChild(open);
     tr.appendChild(access);
     tbody.appendChild(tr);
   }
@@ -128,6 +155,8 @@ function renderDocumentTable(supabase, documents) {
 
 async function loadDocuments(context) {
   const { supabase } = context;
+  documentWorkspaceReady = false;
+  if (submitButton) submitButton.disabled = true;
   const client = await getClient(supabase);
   if (!client) {
     list.textContent = 'No client record is linked to this account.';
@@ -137,7 +166,7 @@ async function loadDocuments(context) {
   }
   const [{ data: documents, error: documentsError }, { data: cases, error: casesError }] = await Promise.all([
     supabase.from('documents').select('id,case_id,file_name,category,review_status,upload_validation_status,storage_path,uploaded_at').eq('client_id', client.id).order('uploaded_at', { ascending: false }),
-    supabase.from('cases').select('id,case_type,title,status,stage').eq('client_id', client.id).order('created_at', { ascending: false }),
+    supabase.from('cases').select('id,case_type,title,status,stage').eq('client_id', client.id).order('id', { ascending: true }),
   ]);
   if (documentsError || casesError) {
     console.error('Document workspace load error', documentsError || casesError);
@@ -147,17 +176,24 @@ async function loadDocuments(context) {
   }
   const caseTypes = [...new Set((cases || []).map((row) => row.case_type).filter(Boolean))];
   let requirements = [];
+  let checklistAvailable = true;
   if (caseTypes.length) {
     const { data, error } = await supabase.from('document_requirements').select('case_type,document_category,required,description').in('case_type', caseTypes).order('required', { ascending: false });
-    if (error) requirementsBox.textContent = 'Document checklist could not be loaded.';
+    if (error) checklistAvailable = false;
     else requirements = data || [];
   }
-  renderRequirements(cases || [], requirements, documents || []);
+  if (checklistAvailable) renderRequirements(cases || [], requirements, documents || []);
+  else requirementsBox.textContent = 'Document checklist is unavailable. Required evidence has not been determined.';
   renderDocumentTable(supabase, documents || []);
+  const syntheticStaging = supabase.supabaseUrl === 'https://qemjnekgcbuddayzhdtr.supabase.co';
+  documentWorkspaceReady = checklistAvailable && !syntheticStaging;
+  if (submitButton) submitButton.disabled = !documentWorkspaceReady;
+  if (syntheticStaging) status.textContent = 'Staging evidence uploads are not enabled.';
 }
 
 form?.addEventListener('submit', async (event) => {
   event.preventDefault();
+  if (!documentWorkspaceReady) { status.textContent = 'Document uploads are unavailable until this workspace is ready.'; return; }
   const context = await ready;
   const { supabase } = context;
   const file = fileInput?.files?.[0];
@@ -191,7 +227,7 @@ form?.addEventListener('submit', async (event) => {
     console.error('Secure document upload failed', error);
     status.textContent = 'The document could not be securely finalized. No incomplete document record was retained. Please try again.';
   } finally {
-    submitButton.disabled = false;
+    submitButton.disabled = !documentWorkspaceReady;
     submitButton.textContent = 'Upload document';
   }
 });

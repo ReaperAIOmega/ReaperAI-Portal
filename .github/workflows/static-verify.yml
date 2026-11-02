@@ -19,4 +19,4 @@ jobs:
       - name: Check letter UI JavaScript syntax
         run: node --check letters.js
       - name: Validate letter workflow integration
-        run: node --test scripts/letters.test.mjs
+        run: node --test scripts/*.test.mjs
