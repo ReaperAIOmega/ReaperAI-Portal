@@ -1,4 +1,4 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/+esm';
 
 const SUPABASE_URL = 'https://itswbmjvuxumfjqkkqgx.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_lgBKt5K8CQCPSC-MaC7s6g_M2iTdWEN';
@@ -10,7 +10,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
 
 const redirectToLogin = () => window.location.replace(LOGIN_URL);
 
-try {
+async function guard() {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   if (sessionError || !session) {
     redirectToLogin();
@@ -34,6 +34,7 @@ try {
         if (securityError || !security?.password_initialized) {
           await supabase.auth.signOut();
           redirectToLogin();
+          return;
         }
       }
 
@@ -54,6 +55,10 @@ try {
       });
     }
   }
+}
+
+try {
+  await guard();
 } catch (error) {
   console.error('Portal authentication error:', error);
   redirectToLogin();
