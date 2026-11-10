@@ -1,4 +1,4 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/+esm';
+import { createClient } from './vendor/supabase-2.117.2.js';
 
 import { resolveRuntime } from './runtime-config.mjs';
 const runtime = resolveRuntime(window.location, 'portal');
@@ -51,7 +51,15 @@ form?.addEventListener('submit', async (event) => {
     supabase.from('account_security').select('password_initialized').eq('profile_id', data.session.user.id).single(),
   ]);
 
-  if (profileError || !profile || !['client','admin'].includes(profile.role) || profile.status !== 'active') {
+  if (profile?.role === 'admin') {
+    await supabase.auth.signOut({ scope: 'local' });
+    status.textContent = 'Administrator accounts sign in at the Admin console, not the client portal.';
+    submitButton.disabled = false;
+    submitButton.textContent = 'Sign in securely';
+    return;
+  }
+
+  if (profileError || !profile || profile.role !== 'client' || profile.status !== 'active') {
     await supabase.auth.signOut();
     status.textContent = 'This account is not authorized for client portal access.';
     submitButton.disabled = false;
@@ -59,7 +67,7 @@ form?.addEventListener('submit', async (event) => {
     return;
   }
 
-  if (profile.role === 'client' && (securityError || !security?.password_initialized)) {
+  if (securityError || !security?.password_initialized) {
     await supabase.auth.signOut();
     status.textContent = 'Complete the secure onboarding link before signing in.';
     submitButton.disabled = false;

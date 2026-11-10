@@ -1,4 +1,4 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/+esm';
+import { createClient } from './vendor/supabase-2.117.2.js';
 
 import { resolveRuntime } from './runtime-config.mjs';
 const runtime = resolveRuntime(window.location, 'portal');
@@ -24,11 +24,17 @@ try {
       .eq('id', session.user.id)
       .single();
 
-    if (profileError || !profile || !['client', 'admin'].includes(profile.role) || profile.status !== 'active') {
+    if (profile?.role === 'admin') {
+      // Administrators use the AAL2-guarded Admin console. The client Portal relies on RLS
+      // ownership alone and performs no MFA check, so an administrator session here would
+      // render cross-client rows at AAL1. Local sign-out keeps the Admin session intact.
+      await supabase.auth.signOut({ scope: 'local' });
+      redirectToLogin();
+    } else if (profileError || !profile || profile.role !== 'client' || profile.status !== 'active') {
       await supabase.auth.signOut();
       redirectToLogin();
     } else {
-      if (profile.role === 'client') {
+      {
         const { data: security, error: securityError } = await supabase
           .from('account_security')
           .select('password_initialized')
