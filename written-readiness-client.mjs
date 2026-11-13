@@ -20,14 +20,15 @@ export async function loadOffer(supabase, quoteId) {
   const { data, error } = await supabase.rpc('preview_written_readiness_quote_offer', { p_quote_id: quoteId });
   if (error) { if (error.code === '42501') return null; throw outcome(error, 'Offer unavailable'); }
   if (!data || data.quote_id !== quoteId || !HEX64.test(data.offer_sha256 ?? '') || !['sent', 'accepted'].includes(data.status)
-      || data.currency !== 'USD' || !(Number(data.amount) > 0) || !data.sent_at || !data.expires_at) {
+      || data.currency !== 'USD' || !(Number(data.amount) > 0) || !Number.isFinite(Date.parse(data.sent_at)) || !Number.isFinite(Date.parse(data.expires_at))) {
     throw Object.assign(new Error('Offer response invalid'), { outcome: 'UNKNOWN' });
   }
   return data;
 }
 
 export function offerExpired(offer, now = Date.now()) {
-  return Date.parse(offer.expires_at) <= now;
+  const expires = Date.parse(offer?.expires_at);
+  return !Number.isFinite(expires) || !Number.isFinite(now) || expires <= now;
 }
 
 export async function acceptOffer(supabase, offer, consent) {

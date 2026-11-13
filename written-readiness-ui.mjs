@@ -37,8 +37,9 @@ async function render({ supabase }) {
     }
     offersEl.append(box);
   }
-  const { data: agreements } = await supabase.from('service_agreements')
+  const { data: agreements, error: agreementsError } = await supabase.from('service_agreements')
     .select('id,case_id,title,body_snapshot,content_hash,status,sent_at,accepted_at').in('status', ['sent', 'accepted']).order('sent_at', { ascending: false });
+  if (agreementsError) { status.textContent = 'Service agreements could not be loaded. Reload to check their status.'; return; }
   // Only agreements for a written-readiness case; generic agreements stay on agreements.html.
   for (const a of (agreements ?? []).filter((row) => offerCases.has(row.case_id))) {
     const box = el('article', null, { className: 'card' });
