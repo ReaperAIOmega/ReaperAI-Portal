@@ -64,3 +64,14 @@ test('page renders database text with textContent only and lists only written-re
   assert.match(html, /No consultation is required/);
   assert.match(html, /not a loan, a lender recommendation, a financing approval or a guarantee/);
 });
+
+
+test('malformed offer timestamps fail closed without an acceptance RPC', async () => {
+  for (const expires_at of [undefined, null, '', 'not-a-date']) {
+    const c = client({ accept_written_readiness_quote: { data: { quote_id: Q, offer_sha256: 'a'.repeat(64), payment_initiated: false, payment_id: P, accepted_at: EXPIRES } } });
+    await assert.rejects(acceptOffer(c, offer({ expires_at }), true), /expired|invalid/);
+    assert.equal(c.calls.length, 0);
+    await assert.rejects(loadOffer(client({ preview_written_readiness_quote_offer: { data: offer({ expires_at }) } }), Q), /invalid/);
+  }
+  await assert.rejects(loadOffer(client({ preview_written_readiness_quote_offer: { data: offer({ sent_at: 'invalid' }) } }), Q), /invalid/);
+});
